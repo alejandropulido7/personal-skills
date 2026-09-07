@@ -18,7 +18,7 @@ Rutina end-to-end. Ejecutar los pasos EN ORDEN. Máx 2 reintentos por etapa; si 
 
 - TradingView Desktop abierto de forma normal. Símbolo: **`{{SYMBOL}}`** (detectar desde la
   watchlist con `tradingview-watchlist/scripts/detect_nas100.py`; independiente del broker).
-- Estrategia en `~/.gemini/config/trading-strategies/{{archivo_yaml}}` (fuente de verdad).
+- Estrategia en `${STRATEGIES_DIR:-${HOME}/.hermes/trading-strategies}/{{archivo_yaml}}` (fuente de verdad).
 - OHLCV en `/tmp/ohlcv_{...}.csv` (tradingview-ohlcv).
 
 ## Scripts

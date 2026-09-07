@@ -9,7 +9,7 @@ Rutina CRT end-to-end. Solo válida durante sesión NY (09:30-16:00 ET). Basada 
 ## Prerrequisitos
 
 - TradingView Desktop abierto (modo normal). Símbolo activo auto-detectado.
-- Estrategia: `~/.gemini/config/trading-strategies/CRT_NY_Equalization.yaml`
+- Estrategia: `${STRATEGIES_DIR:-${HOME}/.hermes/trading-strategies}/CRT_NY_Equalization.yaml`
 - OHLCV en `/tmp/ohlcv_{60,5}.csv`
 
 ## Scripts
@@ -40,7 +40,7 @@ Ejecutar `scan-crt/scripts/crt_analysis.py`:
 
 ### 4. Dibujar niveles + checklist
 ```bash
-python3 ~/.gemini/config/skills/tradingview-drawings/scripts/draw_generic.py \
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-drawings/scripts/draw_generic.py" \
   --levels /tmp/crt_levels.json --res 5
 ```
 Dibuja: rays del rango del open, rectángulo del rango, EQ target (si hay manipulación), líneas SL/TP/Entrada, checklist.

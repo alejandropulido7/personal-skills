@@ -23,8 +23,8 @@ entonces genera el YAML + la skill.
 5. **Resumir y confirmar** — presentar el diseño completo (resumen) y pedir confirmación
    explícita antes de generar archivos.
 6. **Generar** — crear:
-   - `~/.gemini/config/trading-strategies/<Nombre>.yaml` (fuente de verdad de reglas).
-   - `~/.gemini/config/skills/<nombre-skill>/SKILL.md` (rutina, siguiendo
+   - `${STRATEGIES_DIR:-${HOME}/.hermes/trading-strategies}/<Nombre>.yaml` (fuente de verdad de reglas).
+   - `${SKILLS_DIR:-${HOME}/.hermes/skills}/<nombre-skill>/SKILL.md` (rutina, siguiendo
      `reference/skill_template.md`).
    - (Opcional) scripts de análisis en `<nombre-skill>/scripts/` reutilizando los existentes.
 7. **Avisar reinicio** — las skills nuevas requieren reiniciar agy.

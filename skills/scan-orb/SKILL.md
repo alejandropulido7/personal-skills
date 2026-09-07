@@ -9,7 +9,7 @@ Rutina ORB end-to-end. Solo válida durante sesión NY (09:30-16:00 ET). Ejecuta
 ## Prerrequisitos
 
 - TradingView Desktop abierto (modo normal). Símbolo activo auto-detectado.
-- Estrategia: `~/.gemini/config/trading-strategies/ORB_NY_Breakout.yaml`
+- Estrategia: `${STRATEGIES_DIR:-${HOME}/.hermes/trading-strategies}/ORB_NY_Breakout.yaml`
 - OHLCV en `/tmp/ohlcv_{60,5}.csv`
 
 ## Scripts
@@ -40,7 +40,7 @@ Ejecutar `scan-orb/scripts/orb_analysis.py`:
 
 ### 4. Dibujar niveles + checklist
 ```bash
-python3 ~/.gemini/config/skills/tradingview-drawings/scripts/draw_generic.py \
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-drawings/scripts/draw_generic.py" \
   --levels /tmp/orb_levels.json --res 5
 ```
 Dibuja: rays del rango ORB (H rojo, L verde), rectángulo del rango, líneas SL/TP/Entrada, checklist.

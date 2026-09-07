@@ -9,7 +9,7 @@ Rutina ICT end-to-end. Solo operar dentro de killzones. Ejecutar pasos EN ORDEN.
 ## Prerrequisitos
 
 - TradingView Desktop abierto (modo normal). Símbolo activo auto-detectado.
-- Estrategia: `~/.gemini/config/trading-strategies/ICT_Killzone.yaml`
+- Estrategia: `${STRATEGIES_DIR:-${HOME}/.hermes/trading-strategies}/ICT_Killzone.yaml`
 - OHLCV en `/tmp/ohlcv_{60,15,5}.csv`
 
 ## Scripts
@@ -40,7 +40,7 @@ Ejecutar `scan-ict/scripts/ict_levels.py`:
 
 ### 4. Dibujar niveles + checklist
 ```bash
-python3 ~/.gemini/config/skills/tradingview-drawings/scripts/draw_generic.py \
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-drawings/scripts/draw_generic.py" \
   --levels /tmp/ict_levels.json --res 60
 ```
 Dibuja rays FVG/OB/SR, rectángulo del OB, líneas SL/TP/Entrada, checklist azul ICT.

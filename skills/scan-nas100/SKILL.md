@@ -18,7 +18,7 @@ falla, máx 2 reintentos y luego informar al usuario (no continuar a ciegas).
 - TradingView Desktop **abierto de forma normal**. Usa el símbolo **`CAPITALCOM:NAS100`**
   (verified: en este broker los dibujos SÍ se guardan en el layout y se ven en el móvil; en
   `PEPPERSTONE:NAS100` los dibujos inyectados NO persistían).
-- La estrategia en `~/.gemini/config/trading-strategies/NAS100_NY_Liquidity_Sweep.yaml`
+- La estrategia en `${STRATEGIES_DIR:-${HOME}/.hermes/trading-strategies}/NAS100_NY_Liquidity_Sweep.yaml`
   (leer SIEMPRE antes de evaluar; es la fuente de verdad de reglas y checklist).
 - OHLCV en `/tmp/ohlcv_{240,60,15,5}.csv` (skill `tradingview-ohlcv`).
 
@@ -135,7 +135,7 @@ NAS100 — independiente del broker: capitalcom, pepperstone, etc.) y navega a �
 dibujar:
 
 ```bash
-python3 ~/.gemini/config/skills/tradingview-drawings/scripts/draw_all.py \
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-drawings/scripts/draw_all.py" \
   --res 60 --side long --text "<checklist con \n>"
 ```
 

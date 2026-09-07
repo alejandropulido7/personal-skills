@@ -16,7 +16,7 @@ para escanear/analizar los símbolos seguidos.
 ## Script
 
 ```bash
-python3 ~/.gemini/config/skills/tradingview-watchlist/scripts/read_watchlist.py
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-watchlist/scripts/read_watchlist.py"
 ```
 
 Lee `document.body.innerText` desde el panel del gráfico, recorta desde la cabecera
@@ -27,7 +27,7 @@ el texto del panel es la vía fiable.)
 ## Detectar símbolo completo (con broker) desde la watchlist
 
 ```bash
-python3 ~/.gemini/config/skills/tradingview-watchlist/scripts/detect_nas100.py [--short NAS100]
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-watchlist/scripts/detect_nas100.py" [--short NAS100]
 ```
 
 Abre el panel de la lista (si está cerrado) y lee la fila con `data-symbol-full` — devuelve
