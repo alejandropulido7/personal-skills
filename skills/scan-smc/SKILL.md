@@ -9,7 +9,7 @@ Rutina end-to-end SMC. Ejecutar pasos EN ORDEN. Máx 2 reintentos por etapa.
 ## Prerrequisitos
 
 - TradingView Desktop abierto (modo normal o debug). El símbolo activo se auto-detecta desde el gráfico.
-- Estrategia: `~/.gemini/config/trading-strategies/SMC_MultiAsset.yaml`
+- Estrategia: `${STRATEGIES_DIR:-${HOME}/.hermes/trading-strategies}/SMC_MultiAsset.yaml`
 - OHLCV en `/tmp/ohlcv_{240,60,15,5}.csv`
 
 ## Scripts
@@ -40,7 +40,7 @@ Ejecutar `scan-smc/scripts/smc_levels.py`:
 
 ### 4. Dibujar niveles + checklist
 ```bash
-python3 ~/.gemini/config/skills/tradingview-drawings/scripts/draw_generic.py \
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-drawings/scripts/draw_generic.py" \
   --levels /tmp/smc_levels.json --res 60
 ```
 El script auto-detecta el símbolo del gráfico activo y dibuja: rays de niveles S/R, rectángulo OB, líneas SL/TP/Entrada, checklist azul.

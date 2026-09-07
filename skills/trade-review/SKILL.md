@@ -29,18 +29,18 @@ Rutina completa y matemática para auditar el desempeño de las estrategias suge
 ### 1. Actualizar Datos de Mercado (OHLCV)
 Ejecutar la extracción para obtener las velas más recientes de la sesión:
 ```bash
-python3 ~/.gemini/config/skills/tradingview-ohlcv/scripts/ohlcv_extract.py
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-ohlcv/scripts/ohlcv_extract.py"
 ```
 
 ### 2. Ejecutar la Revisión del Trade
 Ejecutar `review_trade.py` apuntando al archivo de niveles de la estrategia analizada:
 ```bash
-python3 ~/.gemini/config/skills/trade-review/scripts/review_trade.py --levels /tmp/nas100_levels.json --draw
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/trade-review/scripts/review_trade.py" --levels /tmp/nas100_levels.json --draw
 ```
 
 O especificando parámetros manuales:
 ```bash
-python3 ~/.gemini/config/skills/trade-review/scripts/review_trade.py \
+python3 "${SKILLS_DIR:-${HOME}/.hermes/skills}/trade-review/scripts/review_trade.py" \
   --side long \
   --entry 29105.0 \
   --sl 29075.0 \

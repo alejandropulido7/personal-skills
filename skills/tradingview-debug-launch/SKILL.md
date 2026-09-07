@@ -123,4 +123,4 @@ sincronización de dibujos al móvil.
 
 ## Reference
 - Drawing skill (how to read/create/delete drawings once connected):
-  `~/.gemini/config/skills/tradingview-drawings/SKILL.md`
+  `${SKILLS_DIR:-${HOME}/.hermes/skills}/tradingview-drawings/SKILL.md`
