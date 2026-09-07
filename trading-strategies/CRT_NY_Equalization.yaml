@@ -1,0 +1,59 @@
+strategy_name: "CRT_NY_Equalization"
+asset: "watchlist"
+broker: "auto-detect"
+symbol: "auto-detect"
+timeframes:
+  - "1h"  # contexto de tendencia
+  - "5m"  # definición de open range y entrada
+sessions:
+  - name: "New York"
+    start_time: "09:30" # EST
+    end_time: "16:00"   # EST
+    enforce_session: true
+  # CRT solo NY — opens en horarios fijos dentro de la sesión
+
+context_rules:
+  identify_trend: "Evaluar dirección en 1H (HH/HL, EMA 20/50). Usar como filtro de sesgo para los trades de equalización."
+  crt_opens: "El día de NY tiene opens fijos por hora de reloj. Cada open define un rango de apertura (primeras 5 velas de 5m = 25 min). Los opens son:"
+  open_times:
+    - "09:30 ET OOD (Open of Day)"
+    - "11:00 ET"
+    - "13:00 ET"
+    - "14:30 ET"
+  strategy_focus: "En cada open, el mercado típicamente MANIPULA (barre un lado del rango) buscando liquidez, y luego se EQUILIBRA (vuelve al otro lado). Si la manipulación es absorbida y el precio rompe limpiamente el rango, se opera la dirección de breakout. El objetivo de equalización es el borde opuesto del rango."
+  decision_rule: "Para cada open: esperar a que se forme el rango (5 velas 5m). Si el precio barre un borde y revierte con fuerza (MSS+engulfing) → EQUALIZACIÓN al borde opuesto. Si el precio rompe limpiamente un borde con volumen → BREAKOUT en esa dirección."
+
+entry_rules:
+  open_range_formed: "5 velas completas de 5m desde la hora del open. El rango se define como el high/low de esas 5 velas."
+  manipulation_detected: "El precio cruza UN borde del rango (cierra por fuera), pero en la siguiente(s) vela(s) revierte y vuelve a cerrar DENTRO del rango + MSS (break del swing de manipulación)."
+  equalization_entry: "Tras la manipulación y MSS, entrar en dirección al borde opuesto del rango. Confirmación: vela envolvente (engulfing) o vela con cuerpo fuerte en dirección del equalización. Market Order al cierre."
+  breakout_entry: "Si el precio CIERRA fuera del rango (un borde) con volumen y la siguiente vela continúa en la misma dirección (no revierte dentro del rango), entrar en dirección de breakout. Market Order al cierre de la 2ª vela."
+  entry_direction: "Depende: equalización → hacia el borde opuesto del rango manipulado. Breakout → dirección de la ruptura."
+
+risk_management:
+  stop_loss_equalization: "Detrás del extremo de la manipulación (sweep) + buffer de 5-10 pts."
+  stop_loss_breakout: "En el borde opuesto del rango del open."
+  take_profit_equalization: "En el borde opuesto del rango del open (1:1 risk minimal). Si el precio pasa el borde, trailing."
+  take_profit_breakout: "1:2 o en el siguiente nivel de liquidez (PDH/PDL, siguiente open range)."
+  max_risk_per_trade_percent: 1.0
+  time_exit: "Si el trade de equalización no alcanza el borde opuesto antes del siguiente open (1h aprox), cerrar."
+
+chart_checklist:
+  analyzed:
+    - "[✅] Sesión NY: [ABIERTA/CERRADA]"
+    - "[✅] Open actual: [09:30/11:00/13:00/14:30] - rango H= [nivel] L= [nivel]"
+    - "[✅] Manipulación: [SI - lado barrido] / [NO - esperando]"
+    - "[✅] Equalización/breakout: [EQ: hacia borde opuesto / BO: dirección de ruptura]"
+    - "[✅] MSS: [SI/NO]"
+    - "[✅] Vela de confirmación: [SI/NO]"
+  pending:
+    - "[[�] Esperar formación del rango del open (primeras 5 velas 5m)"
+    - "[[�] Esperar manipulación (barrido de un borde del rango)"
+    - "[🟠] Esperar MSS que confirme la reversión"
+    - "[🟠] (EQ) Esperar vela confirmación en dirección equalización"
+    - "[🟠] (BO) Esperar 2ª vela confirmación en dirección breakout"
+    - "[🟠] Entrar al cierre de vela confirmación (Market Order)"
+  template:
+    - "CRT: Open=[09:30/11:00/13:00/14:30] Rango H=[nivel] L=[nivel]"
+    - "Manip=[SI lado] EQ/BO=[dirección] MSS=[SI/NO] Conf=[SI/NO]"
+    - "Sesgo=[LONG/SHORT/ESPERAR] | SL [nivel] | TP [nivel opuesto o siguiente]"

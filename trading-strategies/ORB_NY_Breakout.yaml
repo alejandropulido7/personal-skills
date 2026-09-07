@@ -1,0 +1,56 @@
+strategy_name: "ORB_NY_Breakout"
+asset: "watchlist"
+broker: "auto-detect"
+symbol: "auto-detect"
+timeframes:
+  - "1h"  # contexto de tendencia (VWAP, EMA, estructura)
+  - "15m" # definición del rango de apertura
+  - "5m"  # confirmación de breakout y entrada
+sessions:
+  - name: "New York"
+    start_time: "09:30" # EST
+    end_time: "16:00"   # EST
+    enforce_session: true
+  # ORB solo se opera durante la sesión NY, en la apertura
+
+context_rules:
+  identify_trend: "Evaluar dirección en 1H (EMA 20/50, HH/HL, VWAP). La tendencia HTF (1H/4H) filtra la dirección de operación: solo a favor de la tendencia."
+  orb_range_definition: "El rango de apertura (Opening Range) se forma en los primeros 15 minutos de la sesión NY (09:30-09:45 ET). Opcional: 30 min (09:30-10:00 ET). Las velas de este período definen el high y low del ORB."
+  strategy_focus: "Operar la ruptura del rango de apertura en dirección de la tendencia de contexto, con confirmación de volumen. Si no hay breakout en las primeras 2 horas de sesión, cancelar el setup del día."
+  mark_levels:
+    - "ORB High (H del rango 09:30-09:45)"
+    - "ORB Low (L del rango 09:30-09:45)"
+    - "Pre-market High/Low (si disponible)"
+    - "PDH/PDL (niveles de referencia)"
+    - "VWAP (precio medio ponderado intradía)"
+  decision_rule: "Solo operar longs si precio rompe arriba del ORB High + volumen > media; solo shorts si rompe abajo del ORB Low + volumen. Si hay tendencia neutra, esperar la primera ruptura con volumen."
+
+entry_rules:
+  orb_formed: "Debe haber al menos 3 velas de 5m (o 1 vela de 15m) completas desde las 09:30 ET. El ORB High/Low es el máximo/mínimo de esas velas."
+  breakout_candle: "Una vela 5m cierra FUERA del ORB (por encima del High en longs, por debajo del Low en shorts)."
+  volume_confirmation: "El volumen de la vela de breakout debe ser >= 1.5× el volumen promedio de las últimas 20 velas 5m."
+  retest_option: "Si la ruptura tiene volumen bajo (<1.5×) pero el precio sostiene fuera del rango por 2 velas, se puede entrar en el retest del borde del ORB (limite order)."
+  trend_filter: "Si la tendencia 1H/4H es alcista, solo buscar longs. Si es bajista, solo shorts. Si es neutro, operar la primera ruptura con volumen en cualquier dirección."
+  entry: "Market Order al cierre de la vela de breakout (o en el retest del borde del ORB si se cumple retest_option)."
+
+risk_management:
+  stop_loss: "Para longs: debajo del ORB Low o debajo del cuerpo de la vela de breakout (el que sea mayor). Para shorts: arriba del ORB High o arriba del cuerpo de la vela de breakout."
+  take_profit: "Primer TP en 1:1 (breakeven + mover SL al borde del ORB). Segundo TP en 2:1 o en PDH/PDL (lo que esté más cerca)."
+  max_risk_per_trade_percent: 1.0
+  time_exit: "Si la posición no alcanza TP en 2 horas desde la entrada, cerrar a mercado."
+
+chart_checklist:
+  analyzed:
+    - "[✅] Tendencia 1H: [ALCISTA/BAJISTA/NEUTRO] (filtro direccional)"
+    - "[✅] Sesión NY: [ABIERTA/CERRADA] (09:30-16:00 EST)"
+    - "[✅] ORB (09:30-09:45): H= [nivel] / L= [nivel]"
+    - "[✅] Volumen breakout: [nivel > 1.5× / normal / bajo]"
+    - "[✅] Retest: [SI/NO/no aplica]"
+  pending:
+    - "[🟠] Esperar formación del ORB (primeros 15 min de NY)"
+    - "[🟠] Esperar breakout confirmado: vela 5m cierra fuera del ORB con volumen"
+    - "[🟠] (Opcional) Esperar retest del borde del ORB"
+    - "[🟠] Entrar al cierre de la vela breakout (Market Order)"
+  template:
+    - "ORB: sesion=[ABIERTA/CERRADA] ORB_H=[nivel] ORB_L=[nivel] Vol_break=[alta/normal/baja]"
+    - "Sesgo=[LONG/SHORT/ESPERAR] | SL [nivel] | TP1 [nivel] (1:1) | TP2 [nivel] (2:1)"

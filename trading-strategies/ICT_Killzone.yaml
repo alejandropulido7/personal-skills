@@ -1,0 +1,71 @@
+strategy_name: "ICT_Killzone"
+asset: "watchlist"
+broker: "auto-detect"
+symbol: "auto-detect"
+timeframes:
+  - "1h"  # contexto y bias institucional
+  - "15m" # estructura de mercado y FVG/OB
+  - "5m"  # entrada y confirmación
+sessions:
+  - name: "London Open Killzone (ET)"
+    start_time: "02:00 ET"  # 06:00-09:00 UTC = London open
+    end_time: "05:00 ET"
+    enforce_session: true
+  - name: "NY AM Killzone (ET)"
+    start_time: "08:30 ET"  # 12:30-15:00 UTC
+    end_time: "11:00 ET"
+    enforce_session: true
+  - name: "NY PM Killzone (ET)"
+    start_time: "13:30 ET"  # 17:30-20:00 UTC
+    end_time: "16:00 ET"
+    enforce_session: true
+
+context_rules:
+  identify_trend: "Evaluar bias en 1H (HH/HL alcista, LH/LL bajista). La tendencia de 4H es el filtro maestro (contexto mayor)."
+  strategy_focus: "Operar exclusivamente dentro de las killzones (London Open, NY AM, NY PM). Usar Order Blocks, FVG, Breaker Blocks y liquidity sweeps (PDH/PDL, Asia/London range, swings) para entradas en dirección del bias HTF."
+  mark_liquidity_pools:
+    - "PDH/PDL (prev day high/low en NY)"
+    - "Asian Range High/Low (pre-London, 19:00-02:00 ET)"
+    - "London Range High/Low (02:00-05:00 ET)"
+    - "Previous Day Close (PDC)"
+    - "Swings intradiarios (15m)"
+    - "SMT Divergence alerts (si hay correlato disponible, marcarlo)"
+  killzone_priority: "La killzone activa determina los niveles relevantes. Si no hay killzone activa, NO operar."
+  decision_rule: "Solo operar en killzone activa. Buscar sweep de un nivel de liquidez + MSS + FVG/OB en dirección del bias HTF. Si hay SMT Divergence entre activos correlacionados, usarlo como confirmación extra."
+
+entry_rules:
+  killzone_active: "La hora actual debe estar dentro de una killzone definida (London/NY AM/NY PM)."
+  liquidity_sweep_judas: "El precio debe barrer un nivel de liquidez conocido (PDH/PDL, Asian H/L, London H/L, PDC) en contra del bias HTF (judas swing)."
+  market_structure_shift: "Tras el sweep, el precio debe romper con cuerpo el último swing válido (MSS) en dirección del bias."
+  fvg_or_order_block: "Identificar un FVG (3-vela imbalance) o un Order Block (última vela en contra) en la dirección del trade, dentro de la killzone."
+  breaker_block: "Si el mercado rompe un OB previo y luego vuelve a él, ese OB se convierte en Breaker Block (ahora soporte pasó a resistencia o viceversa)."
+  trigger: "Entrar cuando el precio toque o rellene el FVG/OB y se forme una vela de confirmación (cierre bullish/bearish en 5m + cuerpo superando el borde del FVG/OB). Market Order en el cierre de esa vela."
+  smt_divergence: "Opcional - si el activo correlacionado (ej. NAS100 vs S&P) muestra divergencia en el sweep, añade convicción."
+
+risk_management:
+  stop_loss: "Detrás del OB / detrás del extremo del sweep + buffer ATR(14)*0.5 (mín 10 pts)."
+  take_profit: "En el siguiente nivel de liquidez opuesto (próximo PDH/PDL, H/L de killzone opuesta, o rango de sesión). O RR fijo 1:2 mínimo."
+  max_risk_per_trade_percent: 1.0
+  trailing_stop: "Mover SL a break-even tras alcanzar +1R. Trailing de 0.5 ATR a partir de +2R."
+
+chart_checklist:
+  analyzed:
+    - "[✅] Bias HTF (1H/4H): [ALCISTA/BAJISTA/NEUTRO]"
+    - "[✅] Killzone activa: [LONDON/NY_AM/NY_PM/NO] (hora actual: [HH:MM ET])"
+    - "[✅] Spread de killzone: H= [nivel] / L= [nivel]"
+    - "[✅] Liquidez barrida: [nivel + lado] (Judas sweep)"
+    - "[✅] MSS: [SI/NO]"
+    - "[✅] FVG/OB en dirección: [SI + precio borde]"
+    - "[✅] Breaker Block: [SI/NO]"
+    - "[✅] Vela confirmación 5m: [SI/NO]"
+  pending:
+    - "[🟠] Esperar killzone: [próxima killzone + hora]"
+    - "[🟠] Esperar Judas sweep de [PDH/PDL/Asia/Londres/Swing] en [BUY/SELL]-side"
+    - "[🟠] Esperar MSS (break de swing) en dirección del bias"
+    - "[🟠] Esperar relleno de FVG o toque de OB"
+    - "[🟠] Esperar vela de confirmación 5m cerrar fuera del FVG/OB"
+    - "[🟠] Entrar al cierre de la confirmación (Market Order)"
+  template:
+    - "ICT: Bias=[ALCISTA/BAJISTA] KZ=[LON/NYAM/NYPM/-] Sweep=[nivel] MSS=[SI/NO] FVG/OB=[SI]"
+    - "ESPERAR: sweep [nivel] -> MSS -> FVG/OB fill -> confirm 5m -> ENTRADA"
+    - "SL [nivel] | TP [nivel] | R:R [X:Y] | Sesgo: [LONG/SHORT/ESPERAR]"

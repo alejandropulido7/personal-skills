@@ -1,0 +1,58 @@
+strategy_name: "SMC_MultiAsset"
+asset: "watchlist"
+broker: "auto-detect"  # símbolo detectado desde la watchlist vía detect_nas100.py --short <TARGET>
+symbol: "auto-detect"  # se resuelve dinámicamente desde la watchlist
+timeframes:
+  - "4h"  # tendencia general y niveles de liquidez
+  - "1h"  # tendencia intermedia
+  - "15m" # estructura de mercado (swings)
+  - "5m"  # confirmación (engulfing) y entrada
+sessions:
+  - name: "Flexible"
+    start_time: null
+    end_time: null
+    enforce_session: false
+  # Se marcan PDH/PDL y rangos de sesiones previas (Asia, Londres, NY) automáticamente
+
+context_rules:
+  identify_trend: "Evaluar estructura en 4H, 1H y 15m (Higher Highs/Higher Lows para alcista, Lower Highs/Lower Lows para bajista). Determinar la dirección operativa de la sesión."
+  strategy_focus: "Identificar liquidity sweeps, Order Blocks (OB) y Fair Value Gaps (FVG) en dirección de la tendencia de contexto (HTF) para entradas de reversión/continuación."
+  mark_liquidity_pools:
+    - "PDH/PDL (high/low del día anterior)"
+    - "High/Low de sesión Asia (20:00-08:00 ET)"
+    - "High/Low de sesión Londres (08:00-13:00 ET)"
+    - "High/Low de sesión NY (13:00-20:00 ET)"
+    - "Swings significativos intradiarios"
+  decision_rule: "Si el precio barre liquidez (sweep) en contra de la tendencia HTF, y se produce un MSS + OB/FVG + vela envolvente 5m a favor de la tendencia, ENTRAR al cierre de la envolvente. Decidir LONG/SHORT/ESPERAR por mayor probabilidad y mantener coherencia en todo el checklist."
+
+entry_rules:
+  liquidity_sweep: "El precio debe sobrepasar temporalmente un nivel de liquidez marcado (PDH/PDL, H/L de sesión, swing), en dirección opuesta a la tendencia HTF."
+  market_structure_shift: "Tras el sweep, el precio debe revertir y romper con cuerpo de vela el último swing estructural válido (MSS/BOS)."
+  ob_or_fvg: "Identificar un Order Block (última vela en contra antes del movimiento impulsivo) o Fair Value Gap (hueco de 3 velas) en la dirección del trade."
+  trigger: "Una vela envolvente (Engulfing Candle) en 5m a favor de la tendencia confirma la entrada. Market Order al cierre de esta vela."
+  entry_direction: "Ambos, depende de la estructura. Si la tendencia HTF es alcista → buscar longs; si es bajista → shorts."
+
+risk_management:
+  stop_loss: "Estrictamente por encima/debajo del extremo (mecha) del liquidity sweep, sumando buffer de 10-15 pts (ajustar por volatilidad del activo: usar ATR(14)*0.3 como buffer)."
+  take_profit_ratio: 2.0  # R:R 1:2 como mínimo; si hay estructura firme (frente a nivel), TP en estructura
+  max_risk_per_trade_percent: 1.0
+  trailing_stop: "Mover SL a break-even tras alcanzar +1R."
+
+chart_checklist:
+  analyzed:
+    - "[✅] Tendencia 4H: [ALCISTA/BAJISTA/NEUTRO] (HH/HL o LH/LL)"
+    - "[✅] Tendencia 1H/15m: [ALCISTA/BAJISTA/NEUTRO]"
+    - "[✅] Liquidez marcada: [PDH/PDL/Sesión/Swing] y barrida: [SI/NO]"
+    - "[✅] MSS (Market Structure Shift): [SI/NO]"
+    - "[✅] OB/FVG identificado: [SI + nivel]"
+    - "[✅] Vela envolvente 5m: [SI/NO]"
+  pending:
+    - "[🟠] Esperar sweep de [PDH/PDL/Asia/Londres/Swing]"
+    - "[🟠] Esperar MSS: ruptura con cuerpo del último swing válido"
+    - "[🟠] Esperar confirmación OB/FVG + engulfing 5m"
+    - "[🟠] Entrar al cierre de la envolvente (Market Order)"
+    - "[�] R:R >= 1:2 con SL tras el extremo del sweep"
+  template:
+    - "ANALISIS: 4H=[✅/🟠] / 1H=[✅/🟠] / Sweep=[✅/🟠] / MSS=[✅/🟠] / OB/FVG=[✅/🟠] / Engulf=[✅/🟠]"
+    - "ESPERAR: sweep [nivel] -> MSS [nivel ray] -> OB/FVG + engulfing -> ENTRADA"
+    - "R:R 1:2 | SL [nivel] | TP [nivel] | Sesgo: [LONG/SHORT/ESPERAR]"

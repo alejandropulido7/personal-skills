@@ -1,0 +1,74 @@
+strategy_name: "NAS100_NY_Liquidity_Sweep"
+asset: "NAS100"
+broker: "CAPITALCOM"   # symbol: CAPITALCOM:NAS100 — persistencia de dibujos verificada (Pepperstone no guarda)
+symbol: "CAPITALCOM:NAS100"
+timeframes: 
+  - "4h"  # Para identificar la tendencia general y niveles de liquidez
+  - "1h"  # Para identificar la tendencia general y niveles de liquidez
+  - "15m" # Para identificar tendencia y niveles de liquidez
+  - "5m"  # Para confirmación de vela envolvente y entrada
+sessions:
+  - name: "New York"
+    start_time: "09:30" # EST
+    end_time: "16:00"   # EST
+    enforce_session: true
+
+context_rules:
+  identify_trend: "Evaluar la estructura de mercado en 4h, 1h y 15m (Higher Highs / Higher Lows para alcista, Lower Highs / Lower Lows para bajista) para determinar la dirección operativa de la sesión."
+  strategy_focus: "La estrategia se centra en identificar y aprovechar los 'liquidity sweeps' durante la sesión de Nueva York, buscando entradas en contra de la tendencia predominante tras un sweep exitoso."
+  mark_liquidity_pools: 
+    - "High y Low del día anterior (PDH, PDL)."
+    - "High y Low de la sesión de Asia y Londres."
+    - "Swings significativos intradiarios."
+  decision_rule: "Si el precio muestra señales de posible reversión en contra de la tendencia predominante (sweep de liquidez + MSS + engulfing 5m en contra), APLICAR la reversión. NO contradecirse entre 'analizado' y 'por hacer': decidir la mayor probabilidad según los datos y mantenerla hasta el cierre del setup. El analista es libre de elegir el sesgo más probable (LONG/SHORT/ESPERAR) y debe reflejarlo sin ambigüedad en el checklist."
+
+entry_rules:
+  liquidity_sweep: "El precio debe sobrepasar temporalmente uno de los niveles de liquidez marcados en contra de la tendencia predominante."
+  fakeout_breakout: "Determina por probabilidad si se puede usar fakeout o breakout para la entrada, dependiendo de la fuerza de la tendencia y la ubicación del sweep. Si la tendencia es fuerte, se prefiere un breakout; si es débil, un fakeout. Coloca la probabilidad como texto en el grafico (Ej. 'Fakeout 70% / Breakout 30%')."
+  market_structure_shift: "Después del sweep, el precio debe revertirse y romper con cuerpo de vela el último swing estructural válido."
+  trigger: "La reversión debe consolidarse con una vela envolvente (Engulfing Candle) en 5m a favor de la tendencia predominante. La entrada (Market Order) se ejecuta inmediatamente al cierre de esta vela envolvente."
+  level_coherence_rule: |-
+    REGLA OBLIGATORIA DE COHERENCIA Y SL AJUSTADO (optimizado para sesion NY intradiaria):
+    - LONG: la ENTRADA debe estar SIEMPRE POR ENCIMA del nivel MSS que se espera romper
+      (Entrada > MSS), con buffer de +5-10 pts sobre el MSS (o al retest del OB 5m).
+    - SHORT: la ENTRADA debe estar SIEMPRE POR DEBAJO del nivel MSS que se espera romper
+      (Entrada < MSS), con buffer de -5-10 pts bajo el MSS.
+    - SL AJUSTADO (Proteccion Estructural Local):
+      * LONG: SL por debajo del Order Block local 5m/15m o del minimo de la vela gatillo 5m,
+        con buffer de 5-10 pts (Rango objetivo SL: 20-35 pts). Si el sweep fue profundo,
+        NO usar el minimo macro si supera 40 pts de distancia; proteger tras el OB/Swing Low 5m.
+      * SHORT: SL por encima del Order Block local 5m/15m o del maximo de la vela gatillo 5m,
+        con buffer de 5-10 pts (Rango objetivo SL: 20-35 pts).
+    - TP: respetar RR >= 1:2 desde la Entrada (TP = Entrada ± 2*riesgo). Con un SL ajustado
+      de 25-35 pts, el TP de 50-70 pts es altamente alcanzable en la sesion de NY.
+    - Si tras calcular los niveles Entrada y MSS se contradicen (p.ej. LONG con Entrada < MSS),
+      RECALCULAR la Entrada del lado correcto ANTES de dibujar.
+
+risk_management:
+  stop_loss: "SL intradiario ajustado: ubicado estrictamente detras del Order Block local 5m/15m o del extremo de la vela envolvente 5m con buffer de 5-10 puntos. El SL no debe superar 35-40 puntos en NAS100 para maximizar el rendimiento y permitir un TP alcanzable dentro de la sesion NY."
+  take_profit_ratio: 2.0 # Ratio Riesgo/Beneficio (RR) exacto de 1:2
+  max_risk_per_trade_percent: 1.0
+
+chart_checklist:
+  # Texto que se dibuja SIEMPRE en el grafico (tool LineToolText) con el estado del analisis
+  # y lo que falta para tomar el trade. Se ancla a la derecha, fuera de la accion del precio.
+  # Usar emojis: ✅ = cumplido, 🟠 = pendiente/falta por cumplir.
+  # REGLA DE DIBUJO: NO usar LineToolPath (rompe el grafico). Los niveles que se dicen que
+  # "esperar" (MSS, sweep pendiente) DEBEN marcarse con horizontal_ray al precio exacto.
+  analyzed: # Checklist de lo ANALIZADO (marcar con ✅ o 🟠 segun resultado)
+    - "[✅] Tendencia 4H: [ALCISTA/BAJISTA/NEUTRO] (HH/HL o LH/LL)"
+    - "[✅] Tendencia 1H/15m: [ALCISTA/BAJISTA/NEUTRO]"
+    - "[✅] Sesion NY: [ABIERTA/CERRADA] (09:30-16:00 EST)"
+    - "[✅] Sweep consumido: [nivel barrido + direccion]"
+    - "[✅] MSS (Market Structure Shift): [SI/NO]"
+    - "[✅] Vela envolvente 5m: [SI/NO]"
+  pending: # Lo que se DEBE ESPERAR para tomar el trade (checklist de espera)
+    - "[🟠] Esperar barrido de liquidez [PDH/PDL/Asia/Londres/Swing] en [BUY/SEL]L-side"
+    - "[🟠] Esperar MSS: ruptura con cuerpo del ultimo swing valido (MARCADO con horizontal ray)"
+    - "[🟠] Esperar vela envolvente 5m a favor de la tendencia"
+    - "[🟠] Entrar SOLO al cierre de la vela envolvente (Market Order)"
+    - "[🟠] R:R >= 1:2 con SL por detras del extremo del sweep (+10-15 pts buffer)"
+  template: # Plantilla de texto condensada a colocar en el grafico
+    - "ANALISIS: Tend4H=[✅/🟠] / 1H=[✅/🟠] / NY=[✅/🟠] / Sweep=[✅/🟠] / MSS=[✅/🟠] / Engulf5m=[✅/🟠]"
+    - "ESPERAR: sweep [nivel] -> MSS [nivel marcado con ray] -> engulfing 5m -> ENTRADA al cierre"
+    - "R:R 1:2 | SL [nivel] | TP [nivel] | Sesgo: [LONG/SHORT/ESPERAR] (mayor probabilidad)"
